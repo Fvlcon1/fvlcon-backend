@@ -1,8 +1,8 @@
 ## Swagger documentation
-https://documenter.getpostman.com/view/21437451/2sAXxY3oYQ
+https://fvlcon-backend.onrender.com/api#/
 
 ## Postman documentation
-https://documenter.getpostman.com/view/21437451/2sAXxY3oYQ/api
+https://documenter.getpostman.com/view/21437451/2sAXxY3oYQ/
 
 ## API base url
 https://fvlcon-backend.onrender.com
