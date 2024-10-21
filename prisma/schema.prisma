@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id
+  firstName     String         @db.VarChar(255)
+  lastName      String         @db.VarChar(255)
+  email         String         @unique
+  password      String
+  companyCode   String         @db.VarChar(50)
+  emailVerified Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime
+
+  Verification  Verification[]
+  stream        Stream[]
+  cameraFolder  CameraFolder[]
+}
+
+model Verification {
+  id               String   @id
+  verificationCode String
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime
+  
+  userId           String
+
+  User             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Stream {
+  id               String         @id @default(cuid())
+  name             String
+  rtspUrl          String
+
+  userId           String
+  cameraFolderId   String?
+
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cameraFolder     CameraFolder?    @relation(fields: [cameraFolderId], references: [id], onDelete: Cascade)
+  @@unique([id, name])
+}
+
+model CameraFolder {
+  id String @id @default(cuid())
+  name String
+
+  userId  String
+  
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stream    Stream[]
+}
