@@ -2,7 +2,9 @@ import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post 
 import { Stream, User } from "@prisma/client";
 import { StreamService } from "./stream.service";
 import { IAddNewStreamType } from "./stream.type";
+import { ApiTags } from "@nestjs/swagger";
 
+@ApiTags("Stream")
 @Controller('stream')
 export class StreamController{
     constructor(private streamService: StreamService) {}

@@ -3,7 +3,9 @@ import { CameraFolder, Stream, User } from "@prisma/client";
 import { CameraFolderService } from "./camFolder.service";
 import { ICreateFolderType } from "./camFolder.types";
 import { Response } from "express";
+import { ApiTags } from "@nestjs/swagger";
 
+@ApiTags("Camera Folder")
 @Controller('cameraFolder')
 export class CameraFolderController{
     constructor(private cameraFolderService: CameraFolderService) {}

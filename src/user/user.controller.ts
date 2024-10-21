@@ -1,7 +1,9 @@
 import { Controller, Get, HttpException, NotFoundException, Param } from "@nestjs/common";
 import { Stream, User } from "@prisma/client";
 import { UserService } from "./user.service";
+import { ApiTags } from "@nestjs/swagger";
 
+@ApiTags("User")
 @Controller('user')
 export class UserController{
     constructor(private userService: UserService) {}
