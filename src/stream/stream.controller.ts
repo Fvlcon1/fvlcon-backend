@@ -17,7 +17,7 @@ export class StreamController{
     async getAllStreams(@IUser() user : JwtPayload) : Promise<Stream[]>{
         try {
             return await this.streamService.getAllStreams(user.userId)
-        } catch (error) {
+        } catch (error : any) {
             throw new BadRequestException(error.message)
         }
     }
@@ -27,7 +27,7 @@ export class StreamController{
     async getOneStream(@Param("id") id : string, @IUser() user : JwtPayload) : Promise<Stream>{
         try {
             return await this.streamService.getOneStream(id, user.userId)
-        } catch (error) {
+        } catch (error : any) {
             throw new BadRequestException(error.message)
         }
     }
@@ -40,7 +40,7 @@ export class StreamController{
                 userId : user.userId,
                 ...stream
             })
-        } catch (error) {
+        } catch (error : any) {
             throw new BadRequestException(error.message)
         }
     }
@@ -50,7 +50,7 @@ export class StreamController{
     async updateStream(@Body() stream : Partial<IAddNewStreamType>, @IUser() user : JwtPayload, @Param("id") id : string) : Promise<Stream> {
         try {
             return await this.streamService.updateStream(stream, id, user.userId)
-        } catch (error) {
+        } catch (error : any) {
             throw new BadRequestException(error.message)
         }
     }
@@ -60,7 +60,7 @@ export class StreamController{
     async deleteStream(@Param("id") id : string, @IUser() user : JwtPayload) : Promise<Stream> {
         try {
             return await this.streamService.deleteStream(id, user.userId)
-        } catch (error) {
+        } catch (error : any) {
             throw new BadRequestException(error.message)
         }
     }

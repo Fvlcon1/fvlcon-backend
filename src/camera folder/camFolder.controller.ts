@@ -18,7 +18,7 @@ export class CameraFolderController{
     async getAllFolders(@IUser() user : JwtPayload) : Promise<CameraFolder[]>{
         try {
             return await this.cameraFolderService.getAllFolders(user.userId)
-        } catch (error) {
+        } catch (error : any) {
             throw new BadRequestException(error.message)
         }
     }
@@ -28,7 +28,7 @@ export class CameraFolderController{
     async getOneFolder(@Param("id") id : string, @IUser() user : JwtPayload ) : Promise<CameraFolder>{
         try {
             return await this.cameraFolderService.getOneFolder(id, user.userId)
-        } catch (error) {
+        } catch (error : any) {
             throw new BadRequestException(error.message)
         }
     }
@@ -38,7 +38,7 @@ export class CameraFolderController{
     async addFolder(@Body() body : ICreateFolderType, @IUser() user : JwtPayload){
         try {
             return await this.cameraFolderService.addFolder(body, user.userId)
-        } catch (error) {
+        } catch (error : any) {
             throw new BadRequestException(error.message)
         }
     }
@@ -48,7 +48,7 @@ export class CameraFolderController{
     async updateFolder(@Body() body : ICreateFolderType, @Param("id") id : string, @IUser() user : JwtPayload){
         try {
             return await this.cameraFolderService.updateFolder(body, id, user.userId)
-        } catch (error) {
+        } catch (error : any) {
             throw new BadRequestException(error.message)
         }
     }
@@ -58,7 +58,7 @@ export class CameraFolderController{
     async deleteFolder(@Param("id") id : string, @IUser() user : JwtPayload){
         try {
             return await this.cameraFolderService.deleteFolder(id, user.userId)
-        } catch (error) {
+        } catch (error : any) {
             throw new BadRequestException(error.message)
         }
     }
