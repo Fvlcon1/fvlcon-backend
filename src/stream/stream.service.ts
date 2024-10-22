@@ -7,9 +7,10 @@ import { IAddNewStreamType } from './stream.type';
 export class StreamService {
     constructor(private prisma: PrismaService) {}
 
-    async getAllStreams() : Promise<Stream[]> {
+    async getAllStreams(id : string) : Promise<Stream[]> {
         return this.prisma.stream.findMany(
             {
+                where : {id},
                 include : {
                     cameraFolder : true
                 }
@@ -27,14 +28,14 @@ export class StreamService {
         })
     }
 
-    async updateStream(stream : Partial<IAddNewStreamType>, id : string) : Promise<Stream>{
+    async updateStream(stream : Partial<IAddNewStreamType>, id : string, userId : string) : Promise<Stream>{
         return await this.prisma.stream.update({
-            where : {id},
+            where : {id, userId},
             data : stream
         })
     }
 
-    async deleteStream(id : string) : Promise<Stream>{
-        return await this.prisma.stream.delete({where : {id}})
+    async deleteStream(id : string, userId : string) : Promise<Stream>{
+        return await this.prisma.stream.delete({where : {id, userId}})
     }
 }

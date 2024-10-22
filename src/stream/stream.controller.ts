@@ -16,7 +16,7 @@ export class StreamController{
     @Get('getAllStreams')
     async getAllStreams(@IUser() user : JwtPayload) : Promise<Stream[]>{
         try {
-            return await this.streamService.getAllStreams()
+            return await this.streamService.getAllStreams(user.userId)
         } catch (error) {
             throw new BadRequestException(error.message)
         }
@@ -47,9 +47,9 @@ export class StreamController{
 
     @UseGuards(JwtAuthGuard)
     @Patch('updateStream/:id')
-    async updateStream(@Body() stream : Partial<IAddNewStreamType>, @Param("id") id : string) : Promise<Stream> {
+    async updateStream(@Body() stream : Partial<IAddNewStreamType>, @IUser() user : JwtPayload, @Param("id") id : string) : Promise<Stream> {
         try {
-            return await this.streamService.updateStream(stream, id)
+            return await this.streamService.updateStream(stream, id, user.userId)
         } catch (error) {
             throw new BadRequestException(error.message)
         }
@@ -57,9 +57,9 @@ export class StreamController{
 
     @UseGuards(JwtAuthGuard)
     @Delete('deleteStream/:id')
-    async deleteStream(@Param("id") id : string) : Promise<Stream> {
+    async deleteStream(@Param("id") id : string, @IUser() user : JwtPayload) : Promise<Stream> {
         try {
-            return await this.streamService.deleteStream(id)
+            return await this.streamService.deleteStream(id, user.userId)
         } catch (error) {
             throw new BadRequestException(error.message)
         }

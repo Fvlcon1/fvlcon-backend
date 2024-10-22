@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import dotenv, { configDotenv } from 'dotenv';
+import * as dotenv from 'dotenv';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-configDotenv()
 dotenv.config()
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
