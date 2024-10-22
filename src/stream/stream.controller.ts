@@ -24,9 +24,9 @@ export class StreamController{
 
     @UseGuards(JwtAuthGuard)
     @Get('getOneStream/:id')
-    async getOneStream(@IUser() user : JwtPayload) : Promise<Stream>{
+    async getOneStream(@Param("id") id : string, @IUser() user : JwtPayload) : Promise<Stream>{
         try {
-            return await this.streamService.getOneStream(user.userId)
+            return await this.streamService.getOneStream(id, user.userId)
         } catch (error) {
             throw new BadRequestException(error.message)
         }

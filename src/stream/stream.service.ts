@@ -10,7 +10,7 @@ export class StreamService {
     async getAllStreams(id : string) : Promise<Stream[]> {
         return this.prisma.stream.findMany(
             {
-                where : {id},
+                where : {userId : id},
                 include : {
                     cameraFolder : true
                 }
@@ -18,8 +18,8 @@ export class StreamService {
         )
     }
 
-    async getOneStream(id : string) : Promise<Stream> {
-        return await this.prisma.stream.findUnique({where : {id}})
+    async getOneStream(id : string, userId : string) : Promise<Stream> {
+        return await this.prisma.stream.findUnique({where : {id, userId}})
     }
 
     async addNewStream(stream : IAddNewStreamType) : Promise<Stream>{

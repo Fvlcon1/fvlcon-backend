@@ -7,30 +7,33 @@ import { ICreateFolderType } from './camFolder.types';
 export class CameraFolderService {
     constructor(private prisma: PrismaService) {}
 
-    async getAllFolders() : Promise<CameraFolder[]> {
-        return await this.prisma.cameraFolder.findMany()
+    async getAllFolders(userId : string) : Promise<CameraFolder[]> {
+        return await this.prisma.cameraFolder.findMany({where : {userId}})
     }
 
-    async getOneFolder(id : string) : Promise<CameraFolder> {
-        return await this.prisma.cameraFolder.findUnique({where : {id}})
+    async getOneFolder(id : string, userId : string) : Promise<CameraFolder> {
+        return await this.prisma.cameraFolder.findUnique({where : {id, userId}})
     }
 
-    async addFolder(folderDetails : ICreateFolderType) : Promise<CameraFolder> {
+    async addFolder(folderDetails : ICreateFolderType, userId : string) : Promise<CameraFolder> {
         return await this.prisma.cameraFolder.create({
-            data : folderDetails
+            data : {
+                userId,
+                ...folderDetails
+            }
         })
     }
 
-    async updateFolder(folderDetails : ICreateFolderType, id : string) : Promise<CameraFolder> {
+    async updateFolder(folderDetails : ICreateFolderType, id : string, userId : string) : Promise<CameraFolder> {
         return await this.prisma.cameraFolder.update({
-            where : {id},
+            where : {id, userId},
             data : folderDetails
         })
     }
 
-    async deleteFolder(id : string) : Promise<CameraFolder> {
+    async deleteFolder(id : string, userId : string) : Promise<CameraFolder> {
         return await this.prisma.cameraFolder.delete({
-            where : {id}
+            where : {id, userId}
         })
     }
 }
