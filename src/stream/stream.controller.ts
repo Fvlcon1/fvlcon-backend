@@ -4,6 +4,8 @@ import { StreamService } from "./stream.service";
 import { IAddNewStreamType } from "./stream.type";
 import { ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/guards/jwt.guards";
+import { User as IUser } from "src/decorators/user.decorator";
+import { JwtPayload } from "src/types/@types";
 
 @ApiTags("Stream")
 @Controller('stream')
@@ -12,7 +14,7 @@ export class StreamController{
 
     @UseGuards(JwtAuthGuard)
     @Get('getAllStreams')
-    async getAllStreams() : Promise<Stream[]>{
+    async getAllStreams(@IUser() user : JwtPayload) : Promise<Stream[]>{
         try {
             return await this.streamService.getAllStreams()
         } catch (error) {
@@ -22,9 +24,9 @@ export class StreamController{
 
     @UseGuards(JwtAuthGuard)
     @Get('getOneStream/:id')
-    async getOneStream(@Param("id") id : string) : Promise<Stream>{
+    async getOneStream(@IUser() user : JwtPayload) : Promise<Stream>{
         try {
-            return await this.streamService.getOneStream(id)
+            return await this.streamService.getOneStream(user.userId)
         } catch (error) {
             throw new BadRequestException(error.message)
         }
@@ -32,9 +34,12 @@ export class StreamController{
 
     @UseGuards(JwtAuthGuard)
     @Post('addNewStream')
-    async addNewStream(@Body() stream : IAddNewStreamType) : Promise<Stream> {
+    async addNewStream(@Body() stream : IAddNewStreamType, @IUser() user : JwtPayload) : Promise<Stream> {
         try {
-            return await this.streamService.addNewStream(stream)
+            return await this.streamService.addNewStream({
+                userId : user.userId,
+                ...stream
+            })
         } catch (error) {
             throw new BadRequestException(error.message)
         }

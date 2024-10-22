@@ -12,11 +12,11 @@ export class UserController{
     constructor(private userService: UserService) {}
 
     @UseGuards(JwtAuthGuard)
-    @Get('getUserDetails/:id')
-    getAllStreams(@Param("id") id : string, @IUser() user : JwtPayload) : Promise<User[]>{
+    @Get('getUserDetails/')
+    getAllStreams(@IUser() user : JwtPayload) : Promise<User[]>{
         console.log({user})
         try {
-            return this.userService.getUserDetails(id)
+            return this.userService.getUserDetails(user.userId)
         } catch (error) {
             throw new NotFoundException()
         }
