@@ -3,7 +3,7 @@ import { Stream, User } from "@prisma/client";
 import { UserService } from "./user.service";
 import { ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/guards/jwt.guards";
-import { User as IUser } from "src/decorators/User.decorator";
+import { User as IUser } from "src/decorators/user.decorator";
 import { JwtPayload } from "src/types/@types";
 
 @ApiTags("User")

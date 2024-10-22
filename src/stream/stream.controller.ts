@@ -1,14 +1,16 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { Stream, User } from "@prisma/client";
 import { StreamService } from "./stream.service";
 import { IAddNewStreamType } from "./stream.type";
 import { ApiTags } from "@nestjs/swagger";
+import { JwtAuthGuard } from "src/guards/jwt.guards";
 
 @ApiTags("Stream")
 @Controller('stream')
 export class StreamController{
     constructor(private streamService: StreamService) {}
 
+    @UseGuards(JwtAuthGuard)
     @Get('getAllStreams')
     async getAllStreams() : Promise<Stream[]>{
         try {
@@ -18,6 +20,7 @@ export class StreamController{
         }
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get('getOneStream/:id')
     async getOneStream(@Param("id") id : string) : Promise<Stream>{
         try {
@@ -27,6 +30,7 @@ export class StreamController{
         }
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post('addNewStream')
     async addNewStream(@Body() stream : IAddNewStreamType) : Promise<Stream> {
         try {
@@ -36,6 +40,7 @@ export class StreamController{
         }
     }
 
+    @UseGuards(JwtAuthGuard)
     @Patch('updateStream/:id')
     async updateStream(@Body() stream : Partial<IAddNewStreamType>, @Param("id") id : string) : Promise<Stream> {
         try {
@@ -45,6 +50,7 @@ export class StreamController{
         }
     }
 
+    @UseGuards(JwtAuthGuard)
     @Delete('deleteStream/:id')
     async deleteStream(@Param("id") id : string) : Promise<Stream> {
         try {
