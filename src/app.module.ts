@@ -8,14 +8,16 @@ import { UserModule } from './user/user.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './guards/jwt.guards';
+import { TrackingModule } from './tracking/tracking.module';
+import { DynamoDBModule } from './dynamoDB/dynamodb.module';
 
 @Module({
   imports: [
     StreamModule,
     CameraFolderModule,
     UserModule,
+    TrackingModule,
+    DynamoDBModule,
     ConfigModule.forRoot(),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
