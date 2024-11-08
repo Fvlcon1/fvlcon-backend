@@ -1,25 +1,190 @@
-import { DynamoDBDocument, GetCommand } from '@aws-sdk/lib-dynamodb';
-import { Body, Inject, Injectable } from '@nestjs/common';
+import { DynamoDBDocument, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { BadRequestException, Body, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { IGetTrackingDataParams } from './tracking.type';
+import { IGetTrackingDataParams, ISearchFaceByImageParams } from './tracking.type';
+import { AWS_REKOGNITION_CLIENT } from 'src/aws/aws-rekognition.provider';
+import { RekognitionClient, SearchFacesByImageCommand, SearchFacesCommand } from '@aws-sdk/client-rekognition';
+import { AWS_S3_CLIENT } from '../aws/s3.provider';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class TrackingService {
     constructor(
         private prisma: PrismaService,
-        @Inject('DYNAMODB_CLIENT') private readonly dynamoDbClient: DynamoDBDocument
+        @Inject('DYNAMODB_CLIENT') private readonly dynamoDbClient: DynamoDBDocument,
+        @Inject(AWS_REKOGNITION_CLIENT) private readonly rekognitionClient: RekognitionClient,
+        @Inject(AWS_S3_CLIENT) private readonly s3Client: S3Client
     ) {}
 
-    async getTrackingData(reqParams : IGetTrackingDataParams, userId : string) : Promise<any> {
-        console.log({reqParams})
-        const params = new GetCommand({
-            TableName : 'recognised_facesNed',
-            Key : {
-                FaceId : "92aec173-7684-4842-9476-d3ed72879c66",
-                Timestamp : "2024-10-28T16:11:00.161148"
+    /**
+     * Fetches tracking data from aws
+     * @param reqParams IGetTrackingDataParams
+     * @param userId string
+     * @returns Promise<any>
+     */
+    async getTrackingData(reqParams: IGetTrackingDataParams, userId?: string): Promise<any> {
+        const params = new QueryCommand({
+            TableName: 'recognised_facesNed2',
+            IndexName: 'FaceIdIndex',  // Specify the GSI index name here
+            KeyConditionExpression: "#field = :value",
+            ExpressionAttributeNames: {
+                "#field": "FaceId"
+            },
+            ExpressionAttributeValues: {
+                ":value": reqParams.FaceId
+            },
+        });
+    
+        const getData = await this.dynamoDbClient.send(params);
+        return getData.Items || [];
+    }  
+
+    /**
+     * Searches known and unknow collections for faces with a particular faceId
+     * @param param ISearchFaceByImageParams
+     * @returns Tracking data
+     */
+    async searchFaceByImage(param : ISearchFaceByImageParams){
+        const {base64Image, collectionId} = param
+        const formattedBase64Image = base64Image.replace(/^data:.*;base64,/, "");
+        const imageBytes = Buffer.from(formattedBase64Image, 'base64')
+
+        //Seach collection for face
+        const params = {
+            CollectionId: collectionId,
+            Image: {
+                Bytes : imageBytes
+            },
+            MaxFaces: 20,
+            FaceMatchThreshold: 80
+          };
+        const command = new SearchFacesByImageCommand(params);
+        const response = await this.rekognitionClient.send(command)
+        const { FaceMatches } = response
+
+        //Search unknow collection if there are no matches
+        if(response.FaceMatches.length === 0){
+            const params = {
+                CollectionId: 'other-rec-collection',
+                Image: {
+                    Bytes : imageBytes
+                },
+                MaxFaces: 20,
+                FaceMatchThreshold: 80
+              };
+            const command = new SearchFacesByImageCommand(params);
+            const response = await this.rekognitionClient.send(command);
+            const { FaceMatches } = response
+            const faceId = FaceMatches[0].Face.FaceId
+
+            //Fetch tracking data
+            if(faceId){
+                const trackingData = await this.getTrackingData({FaceId : faceId})
+                return trackingData
+            } else {
+                return new NotFoundException("No data found")
             }
-        })
-        const getData = await this.dynamoDbClient.send(params)
-        return getData
+        } else {
+            //Fetch tracking data
+            const faceId = FaceMatches[0].Face.FaceId
+            if(faceId){
+                const trackingData = await this.getTrackingData({FaceId : faceId})
+                return trackingData
+            } else {
+                return new NotFoundException("No data found")
+            }
+        }
+    }
+
+    /**
+     * Generates the image url from s3 key
+     * @param s3Key string
+     * @returns string
+     */
+    async generatePresignedUrl(s3Key: string) {
+        try {
+            const command = new GetObjectCommand({
+              Bucket: process.env.DETECTED_FACES_BUCKET,
+              Key: s3Key,
+            });
+            const url = await getSignedUrl(this.s3Client, command, { expiresIn: 60 * 60 }); // URL valid for 60 minutes
+            return url;
+        } catch (error : any) {
+            console.error({error})
+            return new BadRequestException(`Error generating url: ${error.message}`)
+        }
+      }
+
+    /**
+     * Fetches tracking data from AWS DynamoDB based on a time range.
+     * @param {string} startTimestamp The start of the time range (inclusive).
+     * @param {string} endTimestamp The end of the time range (inclusive).
+     * @returns {Promise<any>} The tracking data.
+     */
+    async getTrackingDataByTimeRange(
+        faceId : string,
+        startTimestamp: string,
+        endTimestamp: string,
+    ): Promise<any> {
+        const params = new QueryCommand({
+            TableName: 'recognised_facesNed2',
+            IndexName: 'FaceIdIndexAndTimestamp',  // Specify the GSI index name
+            KeyConditionExpression: "#faceId = :faceId AND #timestamp BETWEEN :start AND :end",
+            ExpressionAttributeNames: {
+                "#faceId": "FaceId",
+                "#timestamp": "Timestamp"
+            },
+            ExpressionAttributeValues: {
+                ":faceId": faceId,
+                ":start": startTimestamp,
+                ":end": endTimestamp
+            }
+        });
+    
+        try {
+            const data = await this.dynamoDbClient.send(params);
+            return data.Items || [];  // Return the data or an empty array if none
+        } catch (error) {
+            console.error("Error fetching data by FaceId and time range", error);
+            throw new Error("Unable to fetch data");
+        }
+    }
+
+    /**
+     * Fetches tracking data from AWS DynamoDB based on userId and time range.
+     * @param userId 
+     * @param startTimestamp 
+     * @param endTimestamp 
+     * @returns 
+     */
+    async getTrackingDataByUserIdAndTimeRange(
+        userId : string,
+        startTimestamp: string,
+        endTimestamp: string,
+    ): Promise<any> {
+        const params = new QueryCommand({
+            TableName: 'recognised_facesNed2',
+            IndexName: 'UserIdAndTimestampIndex',  // Specify the GSI index name
+            KeyConditionExpression: "#userId = :userId AND #timestamp BETWEEN :start AND :end",
+            ExpressionAttributeNames: {
+                "#userId": "UserId",
+                "#timestamp": "Timestamp"
+            },
+            ExpressionAttributeValues: {
+                ":userId": userId,
+                ":start": startTimestamp,
+                ":end": endTimestamp
+            }
+        });
+    
+        try {
+            const data = await this.dynamoDbClient.send(params);
+            console.log({data})
+            return data.Items || [];  // Return the data or an empty array if none
+        } catch (error) {
+            console.error("Error fetching data by userId and time range", error);
+            throw new Error("Unable to fetch data");
+        }
     }
 }

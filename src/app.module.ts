@@ -9,7 +9,8 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TrackingModule } from './tracking/tracking.module';
-import { DynamoDBModule } from './dynamoDB/dynamodb.module';
+import { DynamoDBModule } from './aws/dynamodb.module';
+import { awsRekognitionProvider } from './aws/aws-rekognition.provider';
 
 @Module({
   imports: [
