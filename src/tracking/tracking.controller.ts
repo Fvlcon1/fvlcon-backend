@@ -7,7 +7,7 @@ import { User as IUser } from "src/decorators/user.decorator";
 import { JwtPayload } from "src/types/@types";
 import { IGetTrackingDataParams, ISearchFaceByImageParams } from "./tracking.type";
 
-@ApiTags("Stream")
+@ApiTags("Tracking")
 @Controller('tracking')
 export class StreamController{
     constructor(private trackingService: TrackingService) {}
