@@ -102,10 +102,10 @@ export class TrackingService {
      * @param s3Key string
      * @returns string
      */
-    async generatePresignedUrl(s3Key: string) {
+    async generatePresignedUrl(s3Key: string, bucketName? : string) {
         try {
             const command = new GetObjectCommand({
-              Bucket: process.env.DETECTED_FACES_BUCKET,
+              Bucket: bucketName ?? process.env.DETECTED_FACES_BUCKET,
               Key: s3Key,
             });
             const url = await getSignedUrl(this.s3Client, command, { expiresIn: 60 * 60 }); // URL valid for 60 minutes
@@ -180,11 +180,59 @@ export class TrackingService {
     
         try {
             const data = await this.dynamoDbClient.send(params);
-            console.log({data})
-            return data.Items || [];  // Return the data or an empty array if none
+            const detailedData = []
+            for(let item of data.Items){
+                const params = new GetCommand({
+                    TableName : 'FaceImageMapping',
+
+                    Key : {
+                        'FaceId' : item.FaceId
+                    }
+                })
+                const capturedImageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key) : undefined
+                const userDetails = await this.dynamoDbClient.send(params)
+                const userImageUrl = userDetails.Item?.S3Key ? await this.generatePresignedUrl(userDetails.Item.S3Key, process.env.FACE_IMAGES_BUCKET) : undefined
+                if(userDetails){
+                    detailedData.push({
+                        ...item, 
+                        imageUrl : capturedImageUrl, 
+                        details : {
+                            ...userDetails.Item, 
+                            imageUrl : userImageUrl
+                        }
+                    })
+                } else {
+                    detailedData.push(item)
+                }
+            }
+            return detailedData;
         } catch (error) {
             console.error("Error fetching data by userId and time range", error);
             throw new Error("Unable to fetch data");
+        }
+    }
+
+    /**
+     * Fetches single tracking data by Id
+     * @param id string
+     * @returns tracking data
+     */
+    async getTrackingDataById(id : string){
+        try {
+            const params = new GetCommand({
+                TableName : 'recognised_facesNed2',
+                Key : { 'Id' : id }
+            })
+            const trackingData = await this.dynamoDbClient.send(params)
+            const imageUrl = trackingData.Item.S3Key ? await this.generatePresignedUrl(trackingData.Item.S3Key) : undefined
+            const detailedData = {
+                ...trackingData.Item,
+                imageUrl
+            }
+            return detailedData
+        } catch (error) {
+            console.error("Error fetching data by userId and time range", error);
+            return new BadRequestException(error);
         }
     }
 }

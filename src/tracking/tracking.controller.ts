@@ -83,4 +83,15 @@ export class StreamController{
             throw new BadRequestException(error.message)
         }
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('getTrackingDataById/:id')
+    async getTrackingDataById(@Param("id") id : string ) : Promise<any>{
+        try {
+            return this.trackingService.getTrackingDataById(id)
+        } catch (error : any) {
+            console.log({error})
+            throw new BadRequestException(error.message)
+        }
+    }
 }
