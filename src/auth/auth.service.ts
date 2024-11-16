@@ -43,6 +43,10 @@ export class AuthService {
   async sendMfa(userId : string, email : string){
     const twoFactorCode = Math.floor(100000 + Math.random() * 900000).toString()
     try {
+      //delete all other codes
+      const deleteCodes = await this.prisma.twoFactor.deleteMany({where : { userId }})
+
+      //create new code
       await this.prisma.twoFactor.create({
         data: {
           User : {
@@ -59,7 +63,7 @@ export class AuthService {
         subject: 'Your 2FA Code',
         html: `<p>Your 2FA code is: <strong>${twoFactorCode}</strong></p>`,
       });
-      console.log({twoFactorCode})
+      console.log({email, twoFactorCode, sendmfa})
     } catch (err) {
       console.error('Error in MFA flow:', err);
       throw new Error('Error generating or sending 2FA code');
