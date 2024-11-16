@@ -11,6 +11,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { TrackingModule } from './tracking/tracking.module';
 import { DynamoDBModule } from './aws/dynamodb.module';
 import { awsRekognitionProvider } from './aws/aws-rekognition.provider';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { awsRekognitionProvider } from './aws/aws-rekognition.provider';
     UserModule,
     TrackingModule,
     DynamoDBModule,
+    AuthModule,
     ConfigModule.forRoot(),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({

@@ -24,7 +24,16 @@ export class StreamService {
 
     async addNewStream(stream : IAddNewStreamType) : Promise<Stream>{
         return await this.prisma.stream.create({
-            data : stream
+            data : {
+                user : {
+                    connect : { id : stream.userId}
+                },
+                name : stream.name,
+                rtspurl : stream.rtspUrl,
+                cameraFolder : {
+                    connect : {id : stream.cameraFolderId}
+                }
+            }
         })
     }
 
