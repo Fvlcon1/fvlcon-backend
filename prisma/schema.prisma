@@ -7,6 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum MediaTypes {
+  image
+  video
+}
+
+enum StatusTypes {
+  failed
+  successful
+}
+
 model User {
   id            String         @id @default(cuid())
   firstName     String         @db.VarChar(255)
@@ -59,4 +69,66 @@ model CameraFolder {
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   stream        Stream[]
+}
+
+model FvlconizationLogs {
+  id                      String           @id @default(cuid())
+  type                    MediaTypes
+  uploadMedia             String[]
+  identifiedPersonFaceId  String
+  date                    DateTime
+  location                String
+  accuracy                Int
+  timeElapsed             Int
+  status                  StatusTypes     
+}
+
+model SegmentationLogs {
+  id                      String           @id @default(cuid())
+  type                    MediaTypes
+  uploadMedia             String[]
+  segmentationMedia       String[]
+  date                    DateTime
+  location                String
+  accuracy                Int
+  timeElapsed             Int
+  status                  StatusTypes     
+}
+
+model PersonLiveVision {
+  id                      String           @id @default(cuid())
+  capturedImage           String
+  identifiedPersonFaceId  String
+  date                    DateTime
+  location                String
+  accuracy                Int
+
+  personTracking          PersonTracking[]
+}
+
+model PlateLiveVision {
+  id                      String           @id @default(cuid())
+  capturedImage           String
+  owner                   String
+  date                    DateTime
+  location                String
+  plateNumber             String
+
+  plateTrackingLogs       PlateTracking[]
+}
+
+model PlateTracking {
+  id                      String                  @id @default(cuid())
+  plateLogId              String
+  plateLog                PlateLiveVision         @relation(fields: [plateLogId], references: [id])
+  date                    DateTime
+  location                String
+}
+
+model PersonTracking {
+  id                      String                  @id @default(cuid())
+  personLogId             String
+  personLog               PersonLiveVision        @relation(fields: [personLogId], references: [id])
+  date                    DateTime
+  location                String
 }

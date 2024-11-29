@@ -7,6 +7,7 @@ import { RekognitionClient, SearchFacesByImageCommand, SearchFacesCommand } from
 import { AWS_S3_CLIENT } from '../aws/s3.provider';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { ScanCommand } from '@aws-sdk/client-dynamodb';
 
 @Injectable()
 export class TrackingService {
@@ -233,6 +234,83 @@ export class TrackingService {
         } catch (error) {
             console.error("Error fetching data by userId and time range", error);
             return new BadRequestException(error);
+        }
+    }
+
+    /**
+     * Executes a full text search on the number plate tracing table
+     * @param partialNumberPlate string
+     * @returns 
+     */
+    async searchNumberPlatePartial(partialNumberPlate: string): Promise<any> {
+        if(partialNumberPlate.length > 0){
+            const params = {
+              TableName: `sam-app-3-NumberPlateTrackingTable`,
+              FilterExpression: 'contains(#np, :partialNumberPlate)',
+              ExpressionAttributeNames: {
+                '#np': 'NormalizedNumberPlate',
+              },
+              ExpressionAttributeValues: {
+                ':partialNumberPlate': { S: partialNumberPlate.toLowerCase() },
+              },
+            };
+        
+            try {
+              const command = new ScanCommand(params);
+              let result = await this.dynamoDbClient.send(command);
+              const detailedData = []
+              for(let item of result.Items){
+                  const imageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key.S, "sam-app-3-number-plate-capture-bucket") : undefined
+                  detailedData.push({
+                      ...item, 
+                      imageUrl
+                  })
+              }
+              return detailedData
+            } catch (error) {
+              console.error('Error in partial number plate search:', error);
+              return new BadRequestException('Failed to search for partial number plate');
+            }
+        } else {
+            return []
+        }
+      }
+
+    async getTrackingDetailsByNumberPlateAndTimestamp(
+        numberPlate : string,
+        startTimestamp: string,
+        endTimestamp: string,
+    ): Promise<any> {
+        console.log({numberPlate, startTimestamp, endTimestamp})
+        const params = new QueryCommand({
+            TableName: 'sam-app-3-NumberPlateTrackingTable',
+            IndexName: 'NormalizedNumberPlateAndTimestampIndex',  // Specify the GSI index name
+            KeyConditionExpression: "#numberPlate = :numberPlate AND #timestamp BETWEEN :start AND :end",
+            ExpressionAttributeNames: {
+                "#numberPlate": "NormalizedNumberPlate",
+                "#timestamp": "Timestamp"
+            },
+            ExpressionAttributeValues: {
+                ":numberPlate": numberPlate.toLowerCase(),
+                ":start": startTimestamp,
+                ":end": endTimestamp
+            }
+        });
+    
+        try {
+            let response = await this.dynamoDbClient.send(params);
+            const detailedData = []
+            for(let item of response.Items){
+                const imageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key) : undefined
+                detailedData.push({
+                    ...item, 
+                    imageUrl
+                })
+            }
+            return detailedData
+        } catch (error) {
+            console.error("Error fetching data by userId and time range", error);
+            throw new Error("Unable to fetch data");
         }
     }
 }

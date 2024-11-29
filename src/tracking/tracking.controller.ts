@@ -94,4 +94,26 @@ export class StreamController{
             throw new BadRequestException(error.message)
         }
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('searchNumberPlatePartial')
+    async searchNumberPlatePartial(@Query("numberPlate") numberPlate : string ) : Promise<any>{
+        try {
+            return this.trackingService.searchNumberPlatePartial(numberPlate)
+        } catch (error : any) {
+            console.log({error})
+            throw new BadRequestException(error.message)
+        }
+    }
+
+    @Get('getTrackingDetailsByNumberPlateAndTimestamp')
+    async getTrackingDetailsByNumberPlateAndTimestamp(@Query() query : {plateNumber : string, startTime : string, endTime : string}) : Promise<any>{
+        const {plateNumber, startTime, endTime} = query
+        try {
+            return this.trackingService.getTrackingDetailsByNumberPlateAndTimestamp(plateNumber, startTime, endTime)
+        } catch (error : any) {
+            console.log({error})
+            throw new BadRequestException(error.message)
+        }
+    }
 }
