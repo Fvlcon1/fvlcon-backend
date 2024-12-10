@@ -18,19 +18,23 @@ enum StatusTypes {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  firstName     String         @db.VarChar(255)
-  lastName      String         @db.VarChar(255)
-  email         String         @unique
-  password      String
-  companyCode   String         @db.VarChar(50)
-  emailVerified Boolean        @default(false)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime
-  stream        Stream[]
-  TwoFactor     TwoFactor[]
-  Verification  Verification[]
-  cameraFolder  CameraFolder[]
+id                    String                @id @default(cuid())
+  firstName           String                @db.VarChar(255)
+  lastName            String                @db.VarChar(255)
+  email               String                @unique
+  password            String
+  companyCode         String                @db.VarChar(50)
+  emailVerified       Boolean               @default(false)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  stream              Stream[]
+  TwoFactor           TwoFactor[]
+  Verification        Verification[]
+  cameraFolder        CameraFolder[]
+  fvlconizationLogs   FvlconizationLogs[]
+  segmentationLogs    SegmentationLogs[]
+  plateTracking       PlateTracking[]
+  personTracking      PersonTracking[]
 }
 
 model Verification {
@@ -74,61 +78,40 @@ model CameraFolder {
 model FvlconizationLogs {
   id                      String           @id @default(cuid())
   type                    MediaTypes
-  uploadMedia             String[]
-  identifiedPersonFaceId  String
+  media                   Json[]
+  uploadedImageS3key      String
   date                    DateTime
-  location                String
-  accuracy                Int
   timeElapsed             Int
   status                  StatusTypes     
+  userId                  String
+  user                    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model SegmentationLogs {
   id                      String           @id @default(cuid())
   type                    MediaTypes
-  uploadMedia             String[]
-  segmentationMedia       String[]
+  media                   Json[]
   date                    DateTime
-  location                String
-  accuracy                Int
   timeElapsed             Int
-  status                  StatusTypes     
-}
-
-model PersonLiveVision {
-  id                      String           @id @default(cuid())
-  capturedImage           String
-  identifiedPersonFaceId  String
-  date                    DateTime
-  location                String
-  accuracy                Int
-
-  personTracking          PersonTracking[]
-}
-
-model PlateLiveVision {
-  id                      String           @id @default(cuid())
-  capturedImage           String
-  owner                   String
-  date                    DateTime
-  location                String
-  plateNumber             String
-
-  plateTrackingLogs       PlateTracking[]
+  status                  StatusTypes  
+  userId                  String
+  user                    User            @relation(fields: [userId], references: [id], onDelete: Cascade)   
 }
 
 model PlateTracking {
   id                      String                  @id @default(cuid())
   plateLogId              String
-  plateLog                PlateLiveVision         @relation(fields: [plateLogId], references: [id])
   date                    DateTime
-  location                String
+  locations               String[]
+  userId                  String
+  user                    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PersonTracking {
   id                      String                  @id @default(cuid())
   personLogId             String
-  personLog               PersonLiveVision        @relation(fields: [personLogId], references: [id])
   date                    DateTime
-  location                String
+  locations               String[]
+  userId                  String
+  user                    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

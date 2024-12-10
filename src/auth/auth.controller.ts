@@ -12,7 +12,7 @@ export class AuthController{
     constructor(private authService: AuthService) {}
 
     @Post('login/')
-    getAllStreams(@Body() body : { email : string, password : string, companyCode : string}) : Promise<User[]>{
+    login(@Body() body : { email : string, password : string, companyCode : string}) : Promise<User[]>{
         const { email, password, companyCode } = body
         try {
             return this.authService.login(email, password, companyCode)

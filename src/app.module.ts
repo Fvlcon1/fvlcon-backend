@@ -12,6 +12,8 @@ import { TrackingModule } from './tracking/tracking.module';
 import { DynamoDBModule } from './aws/dynamodb.module';
 import { awsRekognitionProvider } from './aws/aws-rekognition.provider';
 import { AuthModule } from './auth/auth.module';
+import { FvlconizationsLogsModule } from './appLogs/fvlconizationLogs/fvlconizationLogs.module';
+import { SegmentationsLogsModule } from './appLogs/segmentationLogs/segmentationLogs.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { AuthModule } from './auth/auth.module';
     TrackingModule,
     DynamoDBModule,
     AuthModule,
+    FvlconizationsLogsModule,
+    SegmentationsLogsModule,
     ConfigModule.forRoot(),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
