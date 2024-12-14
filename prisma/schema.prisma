@@ -91,6 +91,7 @@ model SegmentationLogs {
   id                      String           @id @default(cuid())
   type                    MediaTypes
   media                   Json[]
+  uploadedImageS3key      String
   date                    DateTime
   timeElapsed             Int
   status                  StatusTypes  
