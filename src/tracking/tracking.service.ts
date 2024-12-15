@@ -183,22 +183,28 @@ export class TrackingService {
             const data = await this.dynamoDbClient.send(params);
             const detailedData = []
             for(let item of data.Items){
-                const params = new GetCommand({
-                    TableName : 'FaceImageMapping',
-
-                    Key : {
-                        'FaceId' : item.FaceId
+                const params = new QueryCommand({
+                    TableName: process.env.NIA_TABLE,
+                    IndexName: 'FaceIdIndex',  // Specify the GSI index name
+                    KeyConditionExpression: "#FaceId = :faceId",
+                    ExpressionAttributeNames: {
+                        "#FaceId": "FaceId",
+                    },
+                    ExpressionAttributeValues: {
+                        ":faceId": item.FaceId,
                     }
-                })
+                });
                 const capturedImageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key) : undefined
-                const userDetails = await this.dynamoDbClient.send(params)
-                const userImageUrl = userDetails.Item?.S3Key ? await this.generatePresignedUrl(userDetails.Item.S3Key, process.env.FACE_IMAGES_BUCKET) : undefined
+                const getUserDetails = await this.dynamoDbClient.send(params)
+                const userDetails = getUserDetails.Items[0]
+                console.log({getUserDetails})
+                const userImageUrl = userDetails?.S3Key ? await this.generatePresignedUrl(userDetails.S3Key, process.env.FACE_IMAGES_BUCKET) : undefined
                 if(userDetails){
                     detailedData.push({
                         ...item, 
                         imageUrl : capturedImageUrl, 
                         details : {
-                            ...userDetails.Item, 
+                            ...userDetails, 
                             imageUrl : userImageUrl
                         }
                     })
