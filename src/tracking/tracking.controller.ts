@@ -9,7 +9,7 @@ import { IGetTrackingDataParams, ISearchFaceByImageParams } from "./tracking.typ
 
 @ApiTags("Tracking")
 @Controller('tracking')
-export class StreamController{
+export class TrackingController{
     constructor(private trackingService: TrackingService) {}
 
     @UseGuards(JwtAuthGuard)

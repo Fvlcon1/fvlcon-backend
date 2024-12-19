@@ -6,7 +6,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { AWS_S3_CLIENT } from 'src/aws/s3.provider';
 import { PutObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
-import { DynamoDBDocument, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocument, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
 @Injectable()
 export class FvlconizationLogsService {
@@ -88,9 +88,9 @@ async getAllFvlconizationLogs(
   const logs = await this.prisma.fvlconizationLogs.findMany({
     where: {
       userId,
-      ...(Object.keys(dateFilter).length && { date: dateFilter }), // Date filter
-      ...statusFilter, // Status filter
-      ...typeFilter,   // Type filter
+      ...(Object.keys(dateFilter).length && { date: dateFilter }),
+      ...statusFilter,
+      ...typeFilter,
     },
   });
 
@@ -102,13 +102,21 @@ async getAllFvlconizationLogs(
           let userDetails = undefined;
 
           if (mediaItem.matchedFaceId.length > 0) {
-            const params = new GetCommand({
-              TableName: "FaceImageMapping",
-              Key: {
-                FaceId: mediaItem.matchedFaceId,
+            console.log(mediaItem.matchedFaceId)
+            const params = new QueryCommand({
+              TableName: process.env.NIA_TABLE,
+              IndexName: 'FaceIdIndex', // Specify the GSI index name
+              KeyConditionExpression: "#FaceId = :faceId",
+              ExpressionAttributeNames: {
+                  "#FaceId": "FaceId", // Attribute in the GSI
               },
-            });
-            userDetails = await this.dynamoDbClient.send(params);
+              ExpressionAttributeValues: {
+                  ":faceId": mediaItem.matchedFaceId, // Ensure the value matches the DynamoDB type
+              },
+          });
+            const getUserDetails = await this.dynamoDbClient.send(params)
+            userDetails = getUserDetails.Items[0]
+            console.log({userDetails})
           }
 
           if (mediaItem.segmentedImageS3key) {
@@ -118,7 +126,7 @@ async getAllFvlconizationLogs(
             return {
               ...mediaItem,
               segmentedImageUrl: imageUrl,
-              matchedPersonDetails: userDetails?.Item,
+              matchedPersonDetails: userDetails,
             };
           } else return item;
         })

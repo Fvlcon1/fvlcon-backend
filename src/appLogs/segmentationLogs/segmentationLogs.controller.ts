@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { SegmentationLogs, Stream, User } from "@prisma/client";
 import { SegmentationLogsService } from './segmentationLogs.service';
 import { ApiTags } from "@nestjs/swagger";
@@ -37,6 +37,16 @@ export class SegmentationLogsController{
     async deleteSegmentationLog(@Param("id") id : string) : Promise<SegmentationLogs>{
         try {
             return await this.segmentationLogsService.deleteSegmentationLogs(id)
+        } catch (error : any) {
+            throw new BadRequestException(error.message)
+        }
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('getUploadPresignedUrl/')
+    async getUploadPresignedUrl(@Query("filename") filename? : string) : Promise<string | BadRequestException>{
+        try {
+            return await this.segmentationLogsService.generateUploadPresignedUrl(filename)
         } catch (error : any) {
             throw new BadRequestException(error.message)
         }

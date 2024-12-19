@@ -1,17 +1,22 @@
-import { IMediaTypes } from "src/types/@types"
+import { MediaTypes, StatusTypes } from "@prisma/client"
 
 export type SegmentationLogsDto = {
-    type : IMediaTypes,
-    uploadMedia : string[],
-    segmentationMedia : string[],
-    date : Date,
-    location : string,
+    type : MediaTypes
+    media : Media[]
+    date : Date
+    uploadedImageS3key : string
+    timeElapsed : number
+    status : StatusTypes
+}
+export interface Media {
+    segmentedImageS3Key : string,
     accuracy : number,
-    timeElapsed : number,
-    status : StatusTypes,
+    status : StatusTypes
 }
 
-export enum StatusTypes {
-    FAILED = "failed",
-    SUCCESSFUL = "successful"
+export interface Filters {
+    startDate?: Date;
+    endDate?: Date;
+    status?: StatusTypes;
+    type?: MediaTypes;
 }
