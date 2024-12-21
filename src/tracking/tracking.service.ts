@@ -199,18 +199,14 @@ export class TrackingService {
                 const userDetails = getUserDetails.Items[0]
                 console.log({getUserDetails})
                 const userImageUrl = userDetails?.S3Key ? await this.generatePresignedUrl(userDetails.S3Key, process.env.FACE_IMAGES_BUCKET) : undefined
-                if(userDetails){
-                    detailedData.push({
-                        ...item, 
-                        imageUrl : capturedImageUrl, 
-                        details : {
-                            ...userDetails, 
-                            imageUrl : userImageUrl
-                        }
-                    })
-                } else {
-                    detailedData.push(item)
-                }
+                detailedData.push({
+                    ...item, 
+                    imageUrl : capturedImageUrl, 
+                    details : {
+                        ...userDetails, 
+                        imageUrl : userImageUrl
+                    }
+                })
             }
             return detailedData;
         } catch (error) {
