@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { AWS_S3_CLIENT } from 'src/aws/s3.provider';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { validateInput } from '../utils/validation';
+import { z } from 'zod';
 
 @Injectable()
 export class SegmentationLogsService {
@@ -61,23 +63,45 @@ export class SegmentationLogsService {
         }
 
     async getAllSegmentationLogs(userId : string, filters?: Filters) : Promise<SegmentationLogs[]> {
-        const { startDate, endDate, status, type } = filters ?? {};
+      let { startDate, endDate, status, type, page, pageSize, } = filters ?? {};
 
-        // Construct filters dynamically
-        const dateFilter: any = {};
-        if (startDate) dateFilter.gte = startDate;
-        if (endDate) dateFilter.lte = endDate;
+      //zod schema
+      const schema = z.object({
+        startDate : z.date().optional(),
+        status : z.string().optional(),
+        type : z.string().optional(),
+        endDate : z.date().optional(),
+        page : z.number().optional(),
+        pageSize : z.number().optional()
+      })
+
+      //validate request body
+      const validationBody = {startDate, endDate, page, pageSize, status, type}
+      const {error} = validateInput(schema, validationBody)
+      if(error) throw new BadRequestException(error);
+
+      // Construct filters dynamically
+      const dateFilter: any = {};
+      if (startDate) dateFilter.gte = startDate;
+      if (endDate) dateFilter.lte = endDate;
+      page = page ?? 1
+      pageSize = pageSize ?? 20
     
         const statusFilter = status ? { status : status.toLocaleLowerCase() as StatusTypes } : undefined;
         const typeFilter = type ? { type : type.toLocaleLowerCase() as MediaTypes} : undefined;
         
         const logs = await this.prisma.segmentationLogs.findMany({
-            where : { 
-                userId,
-                ...(Object.keys(dateFilter).length && { date: dateFilter }),
-                ...statusFilter,
-                ...typeFilter,
-             }
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          where : { 
+            userId,
+            ...(Object.keys(dateFilter).length && { date: dateFilter }),
+            ...statusFilter,
+            ...typeFilter,
+          },
+          orderBy: {
+            date: 'desc',
+          },
         })
 
         const detailedLogs = await Promise.all(

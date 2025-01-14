@@ -9,7 +9,10 @@ export class PersonTrackingLogsService {
 
     async getAllPersonTrackingLogs(userId : string) : Promise<PersonTracking[]> {
         return await this.prisma.personTracking.findMany({
-            where : { userId }
+            where : { userId },
+            orderBy: {
+                date: 'desc',
+            },
         })
     }
 

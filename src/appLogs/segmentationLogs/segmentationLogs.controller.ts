@@ -5,7 +5,7 @@ import { ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/guards/jwt.guards";
 import { User as IUser } from "src/decorators/user.decorator";
 import { JwtPayload } from "src/types/@types";
-import { SegmentationLogsDto } from "./segmentationLogs.type";
+import { Filters, SegmentationLogsDto } from "./segmentationLogs.type";
 
 @ApiTags("Segmentation logs")
 @Controller('segmentationLogs')
@@ -14,9 +14,17 @@ export class SegmentationLogsController{
 
     @UseGuards(JwtAuthGuard)
     @Get('getAllSegmentationLogs')
-    async getALlSegmentationLogs(@IUser() user : JwtPayload) : Promise<SegmentationLogs[]>{
+    async getALlSegmentationLogs(@IUser() user : JwtPayload, @Query() query : Filters) : Promise<SegmentationLogs[]>{
+        const { startDate, endDate, status, type, page, pageSize } = query;
         try {
-            return await this.segmentationLogsService.getAllSegmentationLogs(user.userId)
+            return await this.segmentationLogsService.getAllSegmentationLogs(user.userId, {
+                startDate,
+                endDate,
+                status,
+                type,
+                page : page && parseInt(page as unknown as string), 
+                pageSize : pageSize && parseInt(pageSize as unknown as string)
+            })
         } catch (error : any) {
             throw new BadRequestException(error.message)
         }

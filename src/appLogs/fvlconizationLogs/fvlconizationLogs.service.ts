@@ -7,6 +7,8 @@ import { AWS_S3_CLIENT } from 'src/aws/s3.provider';
 import { PutObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDBDocument, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { z } from 'zod';
+import { validateInput } from '../utils/validation';
 
 @Injectable()
 export class FvlconizationLogsService {
@@ -74,23 +76,46 @@ async getAllFvlconizationLogs(
   userId: string,
   filters: Filters
 ): Promise<FvlconizationLogs[]> {
-  const { startDate, endDate, status, type } = filters;
+  let { startDate, endDate, status, type, page, pageSize } = filters;
+
+  //zod schema
+  const schema = z.object({
+    startDate : z.date().optional(),
+    status : z.string().optional(),
+    type : z.string().optional(),
+    endDate : z.date().optional(),
+    page : z.number().optional(),
+    pageSize : z.number().optional()
+  })
+
+  //validate request body
+  const validationBody = {startDate, endDate, page, pageSize, status, type}
+  console.log({validationBody})
+  const {error} = validateInput(schema, validationBody)
+  if(error) throw new BadRequestException(error);
 
   // Construct filters dynamically
   const dateFilter: any = {};
   if (startDate) dateFilter.gte = startDate;
   if (endDate) dateFilter.lte = endDate;
+  page = page ?? 1
+  pageSize = pageSize ?? 10
 
   const statusFilter = status ? { status : status.toLocaleLowerCase() as StatusTypes } : undefined;
   const typeFilter = type ? { type : type.toLocaleLowerCase() as MediaTypes} : undefined;
 
   // Query logs with optional filters
   const logs = await this.prisma.fvlconizationLogs.findMany({
+    skip: (page - 1) * pageSize,
+    take: pageSize,
     where: {
       userId,
       ...(Object.keys(dateFilter).length && { date: dateFilter }),
       ...statusFilter,
       ...typeFilter,
+    },
+    orderBy: {
+      date: 'desc',
     },
   });
 
@@ -102,7 +127,6 @@ async getAllFvlconizationLogs(
           let userDetails = undefined;
 
           if (mediaItem.matchedFaceId.length > 0) {
-            console.log(mediaItem.matchedFaceId)
             const params = new QueryCommand({
               TableName: process.env.NIA_TABLE,
               IndexName: 'FaceIdIndex', // Specify the GSI index name
@@ -116,7 +140,6 @@ async getAllFvlconizationLogs(
           });
             const getUserDetails = await this.dynamoDbClient.send(params)
             userDetails = getUserDetails.Items[0]
-            console.log({userDetails})
           }
 
           if (mediaItem.segmentedImageS3key) {

@@ -19,4 +19,6 @@ export interface Filters {
     endDate?: Date;
     status?: StatusTypes;
     type?: MediaTypes;
+    page? : number,
+    pageSize? : number
 }

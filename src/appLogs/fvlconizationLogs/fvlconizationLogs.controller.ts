@@ -15,13 +15,15 @@ export class FvlconizationLogsController{
     @UseGuards(JwtAuthGuard)
     @Get('getAllFvlconizationLogs')
     async getALlFvlconizationLogs(@IUser() user : JwtPayload, @Query() query : Filters) : Promise<FvlconizationLogs[]>{
-        const { startDate, endDate, status, type } = query;
+        const { startDate, endDate, status, type, page, pageSize } = query;
         try {
             return await this.fvlconizationLogsService.getAllFvlconizationLogs(user.userId, {
                 startDate,
                 endDate,
                 status,
-                type
+                type,
+                page : page && parseInt(page as unknown as string), 
+                pageSize : pageSize && parseInt(pageSize as unknown as string)
             })
         } catch (error : any) {
             throw new BadRequestException(error.message)
