@@ -165,7 +165,7 @@ export class TrackingService {
         userId: string,
         startTimestamp: string,
         endTimestamp: string,
-        pageSize: number = 7, // default page size
+        pageSize: number = 100, // default page size
         lastEvaluatedKey?: string, // optional for pagination
     ): Promise<any> {
         const sevenDaysFromNow = new Date((new Date).getTime() - 7 * 24 * 60 * 60 * 1000);
