@@ -165,7 +165,7 @@ export class TrackingService {
         userId: string,
         startTimestamp: string,
         endTimestamp: string,
-        pageSize: number = 100, // default page size
+        pageSize: number = 7, // default page size
         lastEvaluatedKey?: string, // optional for pagination
     ): Promise<any> {
         const sevenDaysFromNow = new Date((new Date).getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -185,9 +185,11 @@ export class TrackingService {
                 ":start": startTimestampStr,
                 ":end": endTimestampStr
             },
+            ScanIndexForward: false, // Retrieves results in descending order of sort key
             Limit: pageSize,
             ExclusiveStartKey: lastEvaluatedKey ? { "UserId": userId, "Timestamp": lastEvaluatedKey } : undefined,
         });
+        
 
         try {
             const data = await this.dynamoDbClient.send(params);
