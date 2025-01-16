@@ -62,7 +62,7 @@ export class TrackingController{
 
     @UseGuards(JwtAuthGuard)
     @Get('getTrackingDataByTimeRange')
-    async getTrackingDataByTimeRange(@Query() query : {faceId : string, startTime : string, endTime : string}) : Promise<any>{
+    async getTrackingDataByTimeRange(@IUser() user : JwtPayload, @Query() query : {faceId : string, startTime : string, endTime : string}) : Promise<any>{
         const {faceId, startTime, endTime} = query
         try {
             return this.trackingService.getTrackingDataByTimeRange(faceId, startTime, endTime)
@@ -74,10 +74,10 @@ export class TrackingController{
 
     @UseGuards(JwtAuthGuard)
     @Get('getTrackingDataByUserIdAndTimeRange')
-    async getTrackingDataByUserIdAndTimeRange(@Query() query : {userId : string, startTime : string, endTime : string}) : Promise<any>{
-        const {userId, startTime, endTime} = query
+    async getTrackingDataByUserIdAndTimeRange(@IUser() user : JwtPayload, @Query() query : {startTime : string, endTime : string}) : Promise<any>{
+        const {startTime, endTime} = query
         try {
-            return this.trackingService.getTrackingDataByUserIdAndTimeRange(userId, startTime, endTime)
+            return this.trackingService.getTrackingDataByUserIdAndTimeRange(user.userId, startTime, endTime)
         } catch (error : any) {
             console.log({error})
             throw new BadRequestException(error.message)

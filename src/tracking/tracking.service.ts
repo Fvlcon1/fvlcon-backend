@@ -153,20 +153,28 @@ export class TrackingService {
     }
 
     /**
-     * Fetches tracking data from AWS DynamoDB based on userId and time range.
+     * Fetches tracking data from AWS DynamoDB based on userId and time range with pagination.
      * @param userId 
      * @param startTimestamp 
      * @param endTimestamp 
+     * @param pageSize 
+     * @param lastEvaluatedKey 
      * @returns 
      */
     async getTrackingDataByUserIdAndTimeRange(
-        userId : string,
+        userId: string,
         startTimestamp: string,
         endTimestamp: string,
+        pageSize: number = 7, // default page size
+        lastEvaluatedKey?: string, // optional for pagination
     ): Promise<any> {
+        const sevenDaysFromNow = new Date((new Date).getTime() - 7 * 24 * 60 * 60 * 1000);
+        const startTimestampStr = startTimestamp ? new Date(startTimestamp).toISOString() : sevenDaysFromNow.toISOString();
+        const endTimestampStr = endTimestamp ? new Date(endTimestamp).toISOString() : new Date().toISOString();
+
         const params = new QueryCommand({
             TableName: 'recognised_facesNed2',
-            IndexName: 'UserIdAndTimestampIndex',  // Specify the GSI index name
+            IndexName: 'UserIdAndTimestampIndex',
             KeyConditionExpression: "#userId = :userId AND #timestamp BETWEEN :start AND :end",
             ExpressionAttributeNames: {
                 "#userId": "UserId",
@@ -174,16 +182,19 @@ export class TrackingService {
             },
             ExpressionAttributeValues: {
                 ":userId": userId,
-                ":start": startTimestamp,
-                ":end": endTimestamp
-            }
+                ":start": startTimestampStr,
+                ":end": endTimestampStr
+            },
+            Limit: pageSize,
+            ExclusiveStartKey: lastEvaluatedKey ? { "UserId": userId, "Timestamp": lastEvaluatedKey } : undefined,
         });
-    
+
         try {
             const data = await this.dynamoDbClient.send(params);
-            const detailedData = []
-            for(let item of data.Items){
-                const params = new QueryCommand({
+            const detailedData = [];
+
+            for (let item of data.Items) {
+                const faceDetailsParams = new QueryCommand({
                     TableName: process.env.NIA_TABLE,
                     IndexName: 'FaceIdIndex',  // Specify the GSI index name
                     KeyConditionExpression: "#FaceId = :faceId",
@@ -194,21 +205,26 @@ export class TrackingService {
                         ":faceId": item.FaceId,
                     }
                 });
-                const capturedImageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key) : undefined
-                const getUserDetails = await this.dynamoDbClient.send(params)
-                const userDetails = getUserDetails.Items[0]
-                console.log({getUserDetails})
-                const userImageUrl = userDetails?.S3Key ? await this.generatePresignedUrl(userDetails.S3Key, process.env.FACE_IMAGES_BUCKET) : undefined
+                const capturedImageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key) : undefined;
+                const getUserDetails = await this.dynamoDbClient.send(faceDetailsParams);
+                const userDetails = getUserDetails.Items[0];
+                const userImageUrl = userDetails?.S3Key ? await this.generatePresignedUrl(userDetails.S3Key, process.env.FACE_IMAGES_BUCKET) : undefined;
                 detailedData.push({
                     ...item, 
-                    imageUrl : capturedImageUrl, 
-                    details : {
+                    imageUrl: capturedImageUrl, 
+                    details: {
                         ...userDetails, 
-                        imageUrl : userImageUrl
+                        imageUrl: userImageUrl
                     }
-                })
+                });
             }
-            return detailedData;
+
+            // Return paginated result with LastEvaluatedKey for next pagination
+            return {
+                data: detailedData,
+                lastEvaluatedKey: data.LastEvaluatedKey ? data.LastEvaluatedKey.Timestamp : undefined,
+            };
+
         } catch (error) {
             console.error("Error fetching data by userId and time range", error);
             throw new Error("Unable to fetch data");
