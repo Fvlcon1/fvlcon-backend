@@ -27,11 +27,9 @@ export class TrackingController{
     @Post('searchFaceByImage')
     async searchFaceByImage(@Body() param : ISearchFaceByImageParams) : Promise<any>{
         try {
-            const {base64Image, collectionId} = param
+            const {base64Image} = param
             if(!base64Image)
                 return new BadRequestException("Image parameter is required")
-            if(!collectionId)
-                return new BadRequestException("collectionId parameter is required")
             return this.trackingService.searchFaceByImage(param)
         } catch (error : any) {
             console.log({error})

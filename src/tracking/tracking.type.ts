@@ -4,7 +4,6 @@ export type IGetTrackingDataParams = {
 }
 
 export type ISearchFaceByImageParams = {
-    collectionId: string
     base64Image : string
 }
 

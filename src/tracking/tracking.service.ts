@@ -8,6 +8,7 @@ import { AWS_S3_CLIENT } from '../aws/s3.provider';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ScanCommand } from '@aws-sdk/client-dynamodb';
+import { getNiaDetails } from 'utils/getNiaDetails';
 
 @Injectable()
 export class TrackingService {
@@ -47,13 +48,13 @@ export class TrackingService {
      * @returns Tracking data
      */
     async searchFaceByImage(param : ISearchFaceByImageParams){
-        const {base64Image, collectionId} = param
+        const {base64Image} = param
         const formattedBase64Image = base64Image.replace(/^data:.*;base64,/, "");
         const imageBytes = Buffer.from(formattedBase64Image, 'base64')
 
         //Seach collection for face
         const params = {
-            CollectionId: collectionId,
+            CollectionId: process.env.NIA_COLLECTION,
             Image: {
                 Bytes : imageBytes
             },
@@ -64,7 +65,7 @@ export class TrackingService {
         const response = await this.rekognitionClient.send(command)
         const { FaceMatches } = response
 
-        //Search unknow collection if there are no matches
+        //Search unknown collection if there are no matches
         if(response.FaceMatches.length === 0){
             const params = {
                 CollectionId: 'other-rec-collection',
@@ -77,6 +78,9 @@ export class TrackingService {
             const command = new SearchFacesByImageCommand(params);
             const response = await this.rekognitionClient.send(command);
             const { FaceMatches } = response
+
+            if(!FaceMatches.length)
+                return new NotFoundException("No data found")
             const faceId = FaceMatches[0].Face.FaceId
 
             //Fetch tracking data
@@ -91,7 +95,12 @@ export class TrackingService {
             const faceId = FaceMatches[0].Face.FaceId
             if(faceId){
                 const trackingData = await this.getTrackingData({FaceId : faceId})
-                return trackingData
+                const niaDetails = await getNiaDetails(faceId)
+                const detailedTrackingData = {
+                    ...trackingData,
+                    details : niaDetails
+                }
+                return detailedTrackingData
             } else {
                 return new NotFoundException("No data found")
             }
