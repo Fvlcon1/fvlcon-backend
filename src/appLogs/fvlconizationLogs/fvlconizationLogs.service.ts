@@ -46,10 +46,10 @@ export class FvlconizationLogsService {
      * @param s3Key string - S3 key of the image
      * @returns string - Pre-signed URL
      */
-    async generateDownloadPresignedUrl(s3Key: string): Promise<string> {
+    async generateDownloadPresignedUrl(s3Key: string, bucket? : string): Promise<string> {
         try {
             const command = new GetObjectCommand({
-                Bucket: 'fvlconized-images-bucket', // Your S3 bucket name
+                Bucket: bucket ?? 'fvlconized-images-bucket', // Your S3 bucket name
                 Key: s3Key,
             });
 
@@ -140,6 +140,8 @@ async getAllFvlconizationLogs(
           });
             const getUserDetails = await this.dynamoDbClient.send(params)
             userDetails = getUserDetails.Items[0]
+            const userImageUrl = userDetails?.S3Key ? await this.generateDownloadPresignedUrl(userDetails.S3Key, process.env.FACE_IMAGES_BUCKET) : undefined;
+            userDetails.imageUrl = userImageUrl
           }
 
           if (mediaItem.segmentedImageS3key) {
