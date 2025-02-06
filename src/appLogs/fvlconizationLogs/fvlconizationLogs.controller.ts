@@ -31,6 +31,16 @@ export class FvlconizationLogsController{
     }
 
     @UseGuards(JwtAuthGuard)
+    @Get('getFvlconizationLog/:id')
+    async getFvlconizationLog(@IUser() user : JwtPayload, @Param("id") id : string) : Promise<FvlconizationLogs>{
+        try {
+            return await this.fvlconizationLogsService.getFvlconizationLog(id, user.userId)
+        } catch (error : any) {
+            throw new BadRequestException(error.message)
+        }
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post('addFvlconizationLogs')
     async addFvlconizationLogs(@Body() body : FvlconizationLogsDto, @IUser() user : JwtPayload) : Promise<FvlconizationLogs>{
         try {
