@@ -14,6 +14,7 @@ import { awsRekognitionProvider } from './aws/aws-rekognition.provider';
 import { AuthModule } from './auth/auth.module';
 import { FvlconizationsLogsModule } from './appLogs/fvlconizationLogs/fvlconizationLogs.module';
 import { SegmentationsLogsModule } from './appLogs/segmentationLogs/segmentationLogs.module';
+import { CriminalRecordsModule } from './criminal records/criminalRecords.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { SegmentationsLogsModule } from './appLogs/segmentationLogs/segmentation
     AuthModule,
     FvlconizationsLogsModule,
     SegmentationsLogsModule,
+    CriminalRecordsModule,
     ConfigModule.forRoot(),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({

@@ -34,7 +34,8 @@ id                    String                @id @default(cuid())
   fvlconizationLogs   FvlconizationLogs[]
   segmentationLogs    SegmentationLogs[]
   plateTracking       PlateTracking[]
-  personTracking      PersonTracking[]
+  personTracking              PersonTracking[]
+  fvlconizationVideoLogs      FvlconizationVideoLogs[]
 }
 
 model Verification {
@@ -110,9 +111,32 @@ model PlateTracking {
 
 model PersonTracking {
   id                      String                  @id @default(cuid())
-  personLogId             String
+  personLogId             String?
   date                    DateTime
   locations               String[]
   userId                  String
   user                    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FvlconizationVideoLogs {
+  id             String      @id
+  date           DateTime
+  timeElapsed    Int
+  status         StatusTypes
+  userId         String
+  occurance      Json[]
+  thumbnailS3Key String
+  videoS3Key     String
+  User           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CriminalRecord {
+  id                      String                  @id @default(cuid())
+  personId                String
+  arrestDate              DateTime
+  arrestingOfficer        String
+  criminalRecordId        String
+  offenceTypee            String
+  sentenceLengthMonths    Int
+  niaTableId              String
 }

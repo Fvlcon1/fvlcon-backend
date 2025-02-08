@@ -9,6 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { DynamoDBDocument, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { z } from 'zod';
 import { validateInput } from '../utils/validation';
+import { getNiaDetails } from 'utils/getNiaDetails';
+import { getRecordDto } from 'src/criminal records/criminalRecords.dto';
 
 @Injectable()
 export class FvlconizationLogsService {
@@ -120,12 +122,10 @@ export class FvlconizationLogsService {
 
     const detailedLogs = await Promise.all(
       logs.map(async (log) => {
-          const detailedMedia = await this.getDetailsMediaFromLog(log)
+        const detailedMedia = await this.getDetailsMediaFromLog(log)
         let uploadedImageUrl: any = undefined;
         if (log.uploadedImageS3key) {
-          uploadedImageUrl = await this.generateDownloadPresignedUrl(
-            log.uploadedImageS3key
-          );
+          uploadedImageUrl = await this.generateDownloadPresignedUrl(log.uploadedImageS3key)
         }
         return {
           ...log,
@@ -137,28 +137,37 @@ export class FvlconizationLogsService {
     return detailedLogs;
   }
 
-  async getDetailsMediaFromLog(log:any){
+  /**
+   * etch Criminal record
+   * @param params 
+   * @returns 
+   */
+  async getCriminalRecord(params : getRecordDto){
+    const {niaTableId} = params
+    const records = await this.prisma.criminalRecord.findMany({
+      where : { niaTableId }
+    })
+
+    return records
+  }
+
+  async getDetailsMediaFromLog(log:FvlconizationLogs){
     const detailedMedia = await Promise.all(
       log.media.map(async (item:any) => {
         const mediaItem = item as any;
         let userDetails = undefined;
 
         if (mediaItem.matchedFaceId.length > 0) {
-          const params = new QueryCommand({
-            TableName: process.env.NIA_TABLE,
-            IndexName: 'FaceIdIndex', // Specify the GSI index name
-            KeyConditionExpression: "#FaceId = :faceId",
-            ExpressionAttributeNames: {
-                "#FaceId": "FaceId", // Attribute in the GSI
-            },
-            ExpressionAttributeValues: {
-                ":faceId": mediaItem.matchedFaceId, // Ensure the value matches the DynamoDB type
-            },
-        });
-          const getUserDetails = await this.dynamoDbClient.send(params)
-          userDetails = getUserDetails.Items[0]
-          const userImageUrl = userDetails?.S3Key ? await this.generateDownloadPresignedUrl(userDetails.S3Key, process.env.FACE_IMAGES_BUCKET) : undefined;
-          userDetails.imageUrl = userImageUrl
+          userDetails = await getNiaDetails(mediaItem.matchedFaceId);
+
+          //Fetch Criminal record
+          const criminalRecord = await this.getCriminalRecord({niaTableId : userDetails.ID})
+          userDetails.criminalRecord = criminalRecord
+
+          if (userDetails.S3Key) {
+            const imageUrl = await this.generateDownloadPresignedUrl(userDetails.S3Key, 'sam-app-3-face-images')
+            userDetails.imageUrl = imageUrl
+          }
         }
 
         if (mediaItem.segmentedImageS3key) {
@@ -176,7 +185,7 @@ export class FvlconizationLogsService {
     return detailedMedia
   }
 
-  async getFvlconizationLog(id:string, userId: string,){
+  async getFvlconizationLog(id:string, userId: string){
     //zod schema
     const schema = z.object({
       id : z.string(),
@@ -191,8 +200,17 @@ export class FvlconizationLogsService {
     const log = await this.prisma.fvlconizationLogs.findFirst({
       where: { userId, id },
     });
+    let uploadedImageUrl: any = undefined;
+    if (log.uploadedImageS3key) {
+      uploadedImageUrl = await this.generateDownloadPresignedUrl(log.uploadedImageS3key)
+    }
+    const detailedMedia = await this.getDetailsMediaFromLog(log)
 
-    return log
+    return {
+      ...log, 
+      media : detailedMedia,
+      uploadedImageUrl
+    }
   }
 
   /**
