@@ -22,15 +22,15 @@ export class PersonTrackingLogsController{
         }
     }
 
-    @UseGuards(JwtAuthGuard)
-    @Post('addPersonTrackingLogs')
-    async addPersonTrackingLogs(@Body() body : PersonTrackingLogsDto, @IUser() user : JwtPayload) : Promise<PersonTracking>{
-        try {
-            return await this.personTrackingLogsService.addPersonTrackingLogs(body, user.userId)
-        } catch (error : any) {
-            throw new BadRequestException(error.message)
-        }
-    }
+    // @UseGuards(JwtAuthGuard)
+    // @Post('addPersonTrackingLogs')
+    // async addPersonTrackingLogs(@Body() body : PersonTrackingLogsDto, @IUser() user : JwtPayload) : Promise<PersonTracking>{
+    //     try {
+    //         return await this.personTrackingLogsService.addPersonTrackingLogs(body, user.userId)
+    //     } catch (error : any) {
+    //         throw new BadRequestException(error.message)
+    //     }
+    // }
 
     @UseGuards(JwtAuthGuard)
     @Delete('deletePersonTrackingLog/:id')

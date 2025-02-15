@@ -15,6 +15,7 @@ import { AuthModule } from './auth/auth.module';
 import { FvlconizationsLogsModule } from './appLogs/fvlconizationLogs/fvlconizationLogs.module';
 import { SegmentationsLogsModule } from './appLogs/segmentationLogs/segmentationLogs.module';
 import { CriminalRecordsModule } from './criminal records/criminalRecords.module';
+import { DvlaRecordModule } from './dvla records/dvlaRecords.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CriminalRecordsModule } from './criminal records/criminalRecords.module
     FvlconizationsLogsModule,
     SegmentationsLogsModule,
     CriminalRecordsModule,
+    DvlaRecordModule,
     ConfigModule.forRoot(),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({

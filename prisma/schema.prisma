@@ -7,35 +7,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum MediaTypes {
-  image
-  video
-}
-
-enum StatusTypes {
-  failed
-  successful
-}
-
 model User {
-id                    String                @id @default(cuid())
-  firstName           String                @db.VarChar(255)
-  lastName            String                @db.VarChar(255)
-  email               String                @unique
-  password            String
-  companyCode         String                @db.VarChar(50)
-  emailVerified       Boolean               @default(false)
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime
-  stream              Stream[]
-  TwoFactor           TwoFactor[]
-  Verification        Verification[]
-  cameraFolder        CameraFolder[]
-  fvlconizationLogs   FvlconizationLogs[]
-  segmentationLogs    SegmentationLogs[]
-  plateTracking       PlateTracking[]
-  personTracking              PersonTracking[]
-  fvlconizationVideoLogs      FvlconizationVideoLogs[]
+  id                     String                   @id @default(cuid())
+  firstName              String                   @db.VarChar(255)
+  lastName               String                   @db.VarChar(255)
+  email                  String                   @unique
+  password               String
+  companyCode            String                   @db.VarChar(50)
+  emailVerified          Boolean                  @default(false)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
+  cameraFolder           CameraFolder[]
+  fvlconizationLogs      FvlconizationLogs[]
+  fvlconizationVideoLogs FvlconizationVideoLogs[]
+  personTracking         PersonTracking[]
+  plateTracking          PlateTracking[]
+  segmentationLogs       SegmentationLogs[]
+  stream                 Stream[]
+  TwoFactor              TwoFactor[]
+  Verification           Verification[]
 }
 
 model Verification {
@@ -48,13 +38,13 @@ model Verification {
 }
 
 model Stream {
-  id      String @id @default(cuid())
-  name    String
-  userId  String
-  rtspurl String
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cameraFolderId      String
-  cameraFolder        CameraFolder      @relation(fields: [cameraFolderId], references: [id])
+  id             String       @id @default(cuid())
+  name           String
+  userId         String
+  rtspurl        String
+  cameraFolderId String
+  cameraFolder   CameraFolder @relation(fields: [cameraFolderId], references: [id])
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([id, name])
 }
@@ -69,53 +59,56 @@ model TwoFactor {
 }
 
 model CameraFolder {
-  id            String   @id @default(cuid())
-  name          String
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stream        Stream[]
+  id     String   @id @default(cuid())
+  name   String
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stream Stream[]
 }
 
 model FvlconizationLogs {
-  id                      String           @id @default(cuid())
-  type                    MediaTypes
-  media                   Json[]
-  uploadedImageS3key      String
-  date                    DateTime
-  timeElapsed             Int
-  status                  StatusTypes     
-  userId                  String
-  user                    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String      @id @default(cuid())
+  type               MediaTypes
+  date               DateTime
+  timeElapsed        Int
+  status             StatusTypes
+  userId             String
+  media              Json[]
+  uploadedImageS3key String
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model SegmentationLogs {
-  id                      String           @id @default(cuid())
-  type                    MediaTypes
-  media                   Json[]
-  uploadedImageS3key      String
-  date                    DateTime
-  timeElapsed             Int
-  status                  StatusTypes  
-  userId                  String
-  user                    User            @relation(fields: [userId], references: [id], onDelete: Cascade)   
-}
-
-model PlateTracking {
-  id                      String                  @id @default(cuid())
-  plateLogId              String
-  date                    DateTime
-  locations               String[]
-  userId                  String
-  user                    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String      @id @default(cuid())
+  type               MediaTypes
+  date               DateTime
+  timeElapsed        Int
+  status             StatusTypes
+  userId             String
+  media              Json[]
+  uploadedImageS3key String
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PersonTracking {
-  id                      String                  @id @default(cuid())
-  personLogId             String?
-  date                    DateTime
-  locations               String[]
-  userId                  String
-  user                    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  date        DateTime
+  userId      String
+  personLogId String
+  faceId      String
+  S3Key       String
+  locations   Json[]
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PlateTracking {
+  id         String   @id @default(cuid())
+  plateLogId String
+  date       DateTime
+  userId     String
+  S3Key      String
+  locations  Json[]
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model FvlconizationVideoLogs {
@@ -131,12 +124,22 @@ model FvlconizationVideoLogs {
 }
 
 model CriminalRecord {
-  id                      String                  @id @default(cuid())
-  personId                String
-  arrestDate              DateTime
-  arrestingOfficer        String
-  criminalRecordId        String
-  offenceTypee            String
-  sentenceLengthMonths    Int
-  niaTableId              String
+  id                   String   @id @default(cuid())
+  personId             String
+  arrestDate           DateTime
+  arrestingOfficer     String
+  criminalRecordId     String
+  offenceTypee         String
+  sentenceLengthMonths Int
+  niaTableId           String
+}
+
+enum MediaTypes {
+  image
+  video
+}
+
+enum StatusTypes {
+  failed
+  successful
 }

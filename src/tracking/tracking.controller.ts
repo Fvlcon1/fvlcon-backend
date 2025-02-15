@@ -83,6 +83,17 @@ export class TrackingController{
     }
 
     @UseGuards(JwtAuthGuard)
+    @Get('getTrackingDataByUserId')
+    async getTrackingDataByUserId(@IUser() user : JwtPayload) : Promise<any>{
+        try {
+            return this.trackingService.getTrackingDataByUserId(user.userId)
+        } catch (error : any) {
+            console.log({error})
+            throw new BadRequestException(error.message)
+        }
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Get('getTrackingDataById/:id')
     async getTrackingDataById(@Param("id") id : string ) : Promise<any>{
         try {

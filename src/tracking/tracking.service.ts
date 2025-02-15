@@ -243,6 +243,76 @@ export class TrackingService {
     }
 
     /**
+     * Fetches tracking data by only userId
+     * @param userId 
+     * @param pageSize 
+     * @param lastEvaluatedKey 
+     * @returns 
+     */
+    async getTrackingDataByUserId(
+        userId: string,
+        pageSize: number = 20, // default page size
+        lastEvaluatedKey?: string, // optional for pagination
+    ): Promise<any> {
+        const params = new QueryCommand({
+            TableName: 'recognised_facesNed2',
+            IndexName: 'UserIdAndTimestampIndex',
+            KeyConditionExpression: "#userId = :userId",
+            ExpressionAttributeNames: {
+                "#userId": "UserId",
+            },
+            ExpressionAttributeValues: {
+                ":userId": userId,
+            },
+            ScanIndexForward: false, // Retrieves results in descending order of sort key
+            Limit: pageSize,
+            ExclusiveStartKey: lastEvaluatedKey ? { "UserId": userId, "Timestamp": lastEvaluatedKey } : undefined,
+        });
+        
+
+        try {
+            const data = await this.dynamoDbClient.send(params);
+            const detailedData = [];
+
+            for (let item of data.Items) {
+                const faceDetailsParams = new QueryCommand({
+                    TableName: process.env.NIA_TABLE,
+                    IndexName: 'FaceIdIndex',  // Specify the GSI index name
+                    KeyConditionExpression: "#FaceId = :faceId",
+                    ExpressionAttributeNames: {
+                        "#FaceId": "FaceId",
+                    },
+                    ExpressionAttributeValues: {
+                        ":faceId": item.FaceId,
+                    }
+                });
+                const capturedImageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key) : undefined;
+                const getUserDetails = await this.dynamoDbClient.send(faceDetailsParams);
+                const userDetails = getUserDetails.Items[0];
+                const userImageUrl = userDetails?.S3Key ? await this.generatePresignedUrl(userDetails.S3Key, process.env.FACE_IMAGES_BUCKET) : undefined;
+                detailedData.push({
+                    ...item, 
+                    imageUrl: capturedImageUrl, 
+                    details: {
+                        ...userDetails, 
+                        imageUrl: userImageUrl
+                    }
+                });
+            }
+
+            // Return paginated result with LastEvaluatedKey for next pagination
+            return {
+                data: detailedData,
+                lastEvaluatedKey: data.LastEvaluatedKey ? data.LastEvaluatedKey.Timestamp : undefined,
+            };
+
+        } catch (error) {
+            console.error("Error fetching data by userId and time range", error);
+            throw new Error("Unable to fetch data");
+        }
+    }
+
+    /**
      * Fetches single tracking data by Id
      * @param id string
      * @returns tracking data
@@ -282,6 +352,7 @@ export class TrackingService {
               ExpressionAttributeValues: {
                 ':partialNumberPlate': { S: partialNumberPlate.toLowerCase() },
               },
+              Limit: 20,
             };
         
             try {

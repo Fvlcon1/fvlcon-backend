@@ -16,7 +16,7 @@ export class PlateTrackingLogsService {
     async addPlateTrackingLogs(data : PlateTrackingLogsDto, userId : string) : Promise<PlateTracking> {
         const add = await this.prisma.plateTracking.create({
             data : {
-                user : { connect : { id : userId}},
+                User : { connect : { id : userId}},
                 ...data
             }
         })

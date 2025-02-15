@@ -16,15 +16,15 @@ export class PersonTrackingLogsService {
         })
     }
 
-    async addPersonTrackingLogs(data : PersonTrackingLogsDto, userId : string) : Promise<PersonTracking> {
-        const add = await this.prisma.personTracking.create({
-            data : {
-                user : { connect : { id : userId}},
-                ...data
-            }
-        })
-        return add
-    }
+    // async addPersonTrackingLogs(data : PersonTrackingLogsDto, userId : string) : Promise<PersonTracking> {
+    //     const add = await this.prisma.personTracking.create({
+    //         data : {
+    //             User : { connect : { id : userId}},
+    //             ...data
+    //         }
+    //     })
+    //     return add
+    // }
 
     async deletePersonTrackingLogs(id : string) : Promise<PersonTracking> {
         return await this.prisma.personTracking.delete({where : {id}})
