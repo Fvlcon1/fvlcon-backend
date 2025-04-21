@@ -352,12 +352,12 @@ export class TrackingService {
               ExpressionAttributeValues: {
                 ':partialNumberPlate': { S: partialNumberPlate.toLowerCase() },
               },
-              Limit: 20,
             };
         
             try {
               const command = new ScanCommand(params);
               let result = await this.dynamoDbClient.send(command);
+              console.log(result)
               const detailedData = []
               for(let item of result.Items){
                   const imageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key.S, "sam-app-3-number-plate-capture-bucket") : undefined

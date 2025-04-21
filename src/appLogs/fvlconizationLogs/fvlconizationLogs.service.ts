@@ -138,7 +138,7 @@ export class FvlconizationLogsService {
   }
 
   /**
-   * etch Criminal record
+   * fetch Criminal record
    * @param params 
    * @returns 
    */

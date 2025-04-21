@@ -30,9 +30,9 @@ export class TrackingController{
             const {base64Image} = param
             if(!base64Image)
                 return new BadRequestException("Image parameter is required")
-            return this.trackingService.searchFaceByImage(param)
+            return await this.trackingService.searchFaceByImage(param)
         } catch (error : any) {
-            console.log({error})
+            console.log({error :  error.message})
             throw new BadRequestException(error.message)
         }
     }

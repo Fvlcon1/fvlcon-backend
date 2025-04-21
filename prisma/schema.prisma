@@ -112,7 +112,7 @@ model PlateTracking {
 }
 
 model FvlconizationVideoLogs {
-  id             String      @id
+  id             String      @id @default(cuid())
   date           DateTime
   timeElapsed    Int
   status         StatusTypes

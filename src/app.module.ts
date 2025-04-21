@@ -16,6 +16,7 @@ import { FvlconizationsLogsModule } from './appLogs/fvlconizationLogs/fvlconizat
 import { SegmentationsLogsModule } from './appLogs/segmentationLogs/segmentationLogs.module';
 import { CriminalRecordsModule } from './criminal records/criminalRecords.module';
 import { DvlaRecordModule } from './dvla records/dvlaRecords.module';
+import { FvlconizationVideoLogsModule } from './appLogs/fvlconizationVideoLogs/videologs.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { DvlaRecordModule } from './dvla records/dvlaRecords.module';
     DynamoDBModule,
     AuthModule,
     FvlconizationsLogsModule,
+    FvlconizationVideoLogsModule,
     SegmentationsLogsModule,
     CriminalRecordsModule,
     DvlaRecordModule,
