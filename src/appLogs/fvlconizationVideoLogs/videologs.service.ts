@@ -75,38 +75,18 @@ export class VideoLogsService {
 		return records
 	}
 
-	async getDetailsMediaFromLog(log:FvlconizationVideoLogs){
-    const detailedMedia = await Promise.all(
+	async includeCroppedImageUrl(log:FvlconizationVideoLogs){
+    const detailedOccurance = await Promise.all(
       log.occurance.map(async (item:any) => {
-        const mediaItem = item as any;
-        let userDetails = undefined;
-
-        if (mediaItem.matchedFaceId.length > 0) {
-          userDetails = await getNiaDetails(mediaItem.matchedFaceId);
-
-          //Fetch Criminal record
-          const criminalRecord = await this.getCriminalRecord({niaTableId : userDetails.ID})
-          userDetails.criminalRecord = criminalRecord
-
-          if (userDetails.S3Key) {
-            const imageUrl = await this.generateDownloadPresignedUrl(userDetails.S3Key, 'sam-app-3-face-images')
-            userDetails.imageUrl = imageUrl
-          }
+        if(item.croppedImageS3Key){
+          const croppedImageUrl = await this.generateDownloadPresignedUrl(item.croppedImageS3Key, process.env.VIDEO_ANALYSIS_THUMBNAIL_BUCKET)
+          item.croppedImageUrl = croppedImageUrl
         }
-
-        if (mediaItem.segmentedImageS3key) {
-          const imageUrl = await this.generateDownloadPresignedUrl(
-            mediaItem.segmentedImageS3key
-          );
-          return {
-            ...mediaItem,
-            segmentedImageUrl: imageUrl,
-            matchedPersonDetails: userDetails,
-          };
-        } else return item;
+        return item
       })
     )
-    return detailedMedia
+    log.occurance = detailedOccurance
+    return log
   }
 
 	async getVideoLog(params : GetVideoLogDTO){
@@ -118,13 +98,12 @@ export class VideoLogsService {
 		});
 		let uploadedImageUrl: any = undefined;
 		if (log.thumbnailS3Key) {
-			uploadedImageUrl = await this.generateDownloadPresignedUrl(log.thumbnailS3Key)
+			uploadedImageUrl = await this.generateDownloadPresignedUrl(log.thumbnailS3Key, process.env.VIDEO_ANALYSIS_THUMBNAIL_BUCKET)
 		}
-		// const detailedMedia = await this.getDetailsMediaFromLog(log)
+		const detailedLog = await this.includeCroppedImageUrl(log)
 
 		return {
-			...log, 
-			// media : detailedMedia,
+			...detailedLog,
 			uploadedImageUrl
 		}
 	}
