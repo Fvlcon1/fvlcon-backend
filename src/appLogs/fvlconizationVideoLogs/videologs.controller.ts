@@ -1,6 +1,6 @@
 import { BadRequestException, Controller, Get, Param, UseGuards } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
-import { VideoLogsService } from "./videoLogs.service";
+import { VideoLogsService } from "./videologs.service";
 import { FvlconizationLogs, FvlconizationVideoLogs } from "@prisma/client";
 import { User as IUser } from "src/decorators/user.decorator";
 import { JwtAuthGuard } from "src/guards/jwt.guards";
