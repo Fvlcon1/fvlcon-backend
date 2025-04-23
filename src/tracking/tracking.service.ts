@@ -59,7 +59,7 @@ export class TrackingService {
                 Bytes : imageBytes
             },
             MaxFaces: 20,
-            FaceMatchThreshold: 80
+            FaceMatchThreshold: 50
           };
         const command = new SearchFacesByImageCommand(params);
         const response = await this.rekognitionClient.send(command)
@@ -68,12 +68,12 @@ export class TrackingService {
         //Search unknown collection if there are no matches
         if(response.FaceMatches.length === 0){
             const params = {
-                CollectionId: 'other-rec-collection',
+                CollectionId: process.env.OTHER_COLLECTION_ID,
                 Image: {
                     Bytes : imageBytes
                 },
                 MaxFaces: 20,
-                FaceMatchThreshold: 80
+                FaceMatchThreshold: 50
               };
             const command = new SearchFacesByImageCommand(params);
             const response = await this.rekognitionClient.send(command);
@@ -86,7 +86,7 @@ export class TrackingService {
             //Fetch tracking data
             if(faceId){
                 const trackingData = await this.getTrackingData({FaceId : faceId})
-                return trackingData
+                return {trackingData}
             } else {
                 return new NotFoundException("No data found")
             }
@@ -97,7 +97,7 @@ export class TrackingService {
                 const trackingData = await this.getTrackingData({FaceId : faceId})
                 const niaDetails = await getNiaDetails(faceId)
                 const detailedTrackingData = {
-                    ...trackingData,
+                    trackingData,
                     details : niaDetails
                 }
                 return detailedTrackingData
