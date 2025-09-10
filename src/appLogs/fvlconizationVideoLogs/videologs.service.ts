@@ -28,7 +28,7 @@ export class VideoLogsService {
       const uniqueFileName = `${uuidv4()}-${new Date()}`;
       try {
           const command = new PutObjectCommand({
-              Bucket: 'fvlconized-images-bucket', // Your S3 bucket name
+              Bucket: process.env.FVLCONIZED_IMAGES_BUCKET, // Your S3 bucket name
               Key: filename ?? uniqueFileName,
               ContentType: 'image/jpeg',
           });
@@ -49,7 +49,7 @@ export class VideoLogsService {
   	async generateDownloadPresignedUrl(s3Key: string, bucket? : string): Promise<string> {
       try {
           const command = new GetObjectCommand({
-              Bucket: bucket ?? 'fvlconized-images-bucket', // Your S3 bucket name
+              Bucket: bucket ?? process.env.FVLCONIZED_IMAGES_BUCKET, // Your S3 bucket name
               Key: s3Key,
           });
 

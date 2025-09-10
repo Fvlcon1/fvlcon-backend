@@ -27,7 +27,7 @@ export class TrackingService {
      */
     async getTrackingData(reqParams: IGetTrackingDataParams, userId?: string): Promise<any> {
         const params = new QueryCommand({
-            TableName: 'recognised_facesNed2',
+            TableName: process.env.RECOGNISED_FACES_TABLE,
             IndexName: 'FaceIdIndex',  // Specify the GSI index name here
             KeyConditionExpression: "#field = :value",
             ExpressionAttributeNames: {
@@ -138,7 +138,7 @@ export class TrackingService {
         endTimestamp: string,
     ): Promise<any> {
         const params = new QueryCommand({
-            TableName: 'recognised_facesNed2',
+            TableName: process.env.RECOGNISED_FACES_TABLE,
             IndexName: 'FaceIdIndexAndTimestamp',  // Specify the GSI index name
             KeyConditionExpression: "#faceId = :faceId AND #timestamp BETWEEN :start AND :end",
             ExpressionAttributeNames: {
@@ -180,9 +180,10 @@ export class TrackingService {
         const sevenDaysFromNow = new Date((new Date).getTime() - 7 * 24 * 60 * 60 * 1000);
         const startTimestampStr = startTimestamp ? new Date(startTimestamp).toISOString() : sevenDaysFromNow.toISOString();
         const endTimestampStr = endTimestamp ? new Date(endTimestamp).toISOString() : new Date().toISOString();
+        console.log("\n\n", {env : process.env.RECOGNISED_FACES_TABLE}, "\n\n")
 
         const params = new QueryCommand({
-            TableName: 'recognised_facesNed2',
+            TableName: process.env.RECOGNISED_FACES_TABLE,
             IndexName: 'UserIdAndTimestampIndex',
             KeyConditionExpression: "#userId = :userId AND #timestamp BETWEEN :start AND :end",
             ExpressionAttributeNames: {
@@ -254,8 +255,9 @@ export class TrackingService {
         pageSize: number = 20, // default page size
         lastEvaluatedKey?: string, // optional for pagination
     ): Promise<any> {
+        console.log("\n\n", {env : process.env.RECOGNISED_FACES_TABLE}, 1, "\n\n")
         const params = new QueryCommand({
-            TableName: 'recognised_facesNed2',
+            TableName: process.env.RECOGNISED_FACES_TABLE,
             IndexName: 'UserIdAndTimestampIndex',
             KeyConditionExpression: "#userId = :userId",
             ExpressionAttributeNames: {
@@ -318,9 +320,10 @@ export class TrackingService {
      * @returns tracking data
      */
     async getTrackingDataById(id : string){
+        console.log("\n\n", {env : process.env.RECOGNISED_FACES_TABLE}, "\n\n")
         try {
             const params = new GetCommand({
-                TableName : 'recognised_facesNed2',
+                TableName : process.env.RECOGNISED_FACES_TABLE,
                 Key : { 'Id' : id }
             })
             const trackingData = await this.dynamoDbClient.send(params)
@@ -344,7 +347,7 @@ export class TrackingService {
     async searchNumberPlatePartial(partialNumberPlate: string): Promise<any> {
         if(partialNumberPlate.length > 0){
             const params = {
-              TableName: `sam-app-3-NumberPlateTrackingTable`,
+              TableName: process.env.NUMBER_PLATE_TRACKING_TABLE,
               FilterExpression: 'contains(#np, :partialNumberPlate)',
               ExpressionAttributeNames: {
                 '#np': 'NormalizedNumberPlate',
@@ -360,7 +363,7 @@ export class TrackingService {
               console.log(result)
               const detailedData = []
               for(let item of result.Items){
-                  const imageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key.S, "sam-app-3-number-plate-capture-bucket") : undefined
+                  const imageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key.S, process.env.NUMBER_PLATE_CAPTURE_BUCKET) : undefined
                   detailedData.push({
                       ...item, 
                       imageUrl
@@ -382,8 +385,9 @@ export class TrackingService {
         endTimestamp: string,
     ): Promise<any> {
         console.log({numberPlate, startTimestamp, endTimestamp})
+        console.log("\n\n", {env : process.env.RECOGNISED_FACES_TABLE}, "\n\n")
         const params = new QueryCommand({
-            TableName: 'sam-app-3-NumberPlateTrackingTable',
+            TableName: process.env.NUMBER_PLATE_TRACKING_TABLE,
             IndexName: 'NormalizedNumberPlateAndTimestampIndex',  // Specify the GSI index name
             KeyConditionExpression: "#numberPlate = :numberPlate AND #timestamp BETWEEN :start AND :end",
             ExpressionAttributeNames: {
@@ -401,7 +405,7 @@ export class TrackingService {
             let response = await this.dynamoDbClient.send(params);
             const detailedData = []
             for(let item of response.Items){
-                const imageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key) : undefined
+                const imageUrl = item.S3Key ? await this.generatePresignedUrl(item.S3Key.S, process.env.NUMBER_PLATE_CAPTURE_BUCKET) : undefined
                 detailedData.push({
                     ...item, 
                     imageUrl
