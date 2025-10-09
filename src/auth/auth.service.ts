@@ -58,7 +58,7 @@ export class AuthService {
       });
   
       const sendmfa = await resend.emails.send({
-        from: 'Fvlcon <info@fvlcon.co>',
+        from: 'Fvlcon <info@fvlcon.org>',
         to: [email],
         subject: 'Your 2FA Code',
         html: `<p>Your 2FA code is: <strong>${twoFactorCode}</strong></p>`,
